@@ -9,7 +9,8 @@ class ServiceRegistry {
     this.timeout = 40;
   }
 
-  async register(name: string, version: string, ip: string, port: number) {
+   register(name: string, version: string, ip: string, port: number) {
+     this.cleanup();
     const key = name + version + ip + port;
 
     if (!this.services[key]) {
@@ -30,7 +31,8 @@ class ServiceRegistry {
     return key;
   }
 
-  async find(name: string, version: string) {
+   find(name: string, version: string) {
+     this.cleanup()
     const candidates = Object.values(this.services).filter(
       (service: any) =>
         service.name === name && semver.satisfies(service.version, version)
@@ -38,10 +40,20 @@ class ServiceRegistry {
     return candidates[Math.floor(Math.random() * candidates.length)];
   }
 
-  async remove(name: string, version: string, ip: string, port: number) {
+   remove(name: string, version: string, ip: string, port: number) {
     const key = name + version + ip + port;
     delete this.services[key];
     return key;
+  }
+  
+  cleanup() {
+    const now = Math.floor(new Date().valueOf() / 1000)
+    Object.keys(this.services).forEach(servicekey => {
+      if (this.services[servicekey].timestamp + this.timeout < now) {
+        delete this.services[servicekey];
+        console.log(`service cleaned ${servicekey}`)
+      }
+    })
   }
 }
 
